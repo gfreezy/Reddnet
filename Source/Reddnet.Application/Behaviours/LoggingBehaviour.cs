@@ -11,20 +11,25 @@ class LoggingBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TRespo
     public LoggingBehaviour(ILogger<LoggingBehaviour<TRequest, TResponse>> logger)
         => this.logger = logger;
 
-    public async Task<TResponse> Handle(TRequest request, CancellationToken cancellationToken, RequestHandlerDelegate<TResponse> next)
+    public Task<TResponse> Handle(TRequest request,  RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
         this.logger.LogInformation($"Request: {request}");
-        var response = await next();
+        var response = next().ContinueWith(
+            response =>
+            {
+                if (response.Result is Result { IsError: true })
+                {
+                    this.logger.LogError($"Response: {response}");
+                }
+                else
+                {
+                    this.logger.LogInformation($"Response: {response}");
+                }
 
-        if (response is Result result && result.IsError)
-        {
-            this.logger.LogError($"Response: {response}");
-        }
-        else
-        {
-            this.logger.LogInformation($"Response: {response}");
-        }
+                return response.Result;
 
+            }, cancellationToken);
         return response;
     }
+
 }

@@ -10,7 +10,8 @@ using Reddnet.Web.Authorization;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication();
-builder.Services.AddDataAccess(builder.Configuration["ConnectionString"]);
+var connectionString = builder.Configuration.GetConnectionString("WebApiDatabase");
+builder.Services.AddDataAccess(connectionString);
 builder.Services.AddScoped<IUser, User>();
 
 builder.Services.AddRazorPages()
